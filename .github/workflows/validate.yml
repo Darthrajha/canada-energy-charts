@@ -1,0 +1,36 @@
+name: validate
+
+on:
+  push:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 12 1 * *"   # monthly: catch upstream StatCan/NRCan revisions
+
+jobs:
+  run-pipelines:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run pipelines
+        working-directory: src
+        run: |
+          python affordability_gap.py
+          python ac_coverage.py
+          python residential_ghg.py
+
+      - name: Validate against published chart values
+        run: pytest -v
+
+      - name: Upload processed data
+        uses: actions/upload-artifact@v4
+        with:
+          name: processed-data
+          path: data/processed/

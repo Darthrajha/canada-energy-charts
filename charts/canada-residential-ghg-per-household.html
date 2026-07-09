@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Residential GHG per household: Canada</title>
+<style>
+  :root{ --ink:#143b5e; --muted:#5b6b78; }
+  *{box-sizing:border-box}
+  body{margin:0;padding:0;background:#fff}
+  .cc{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:#1b2733;max-width:720px;margin:0 auto;padding:20px 18px 22px;background:#fff;border:1px solid #f0e9d2}
+  .cc h1{color:var(--ink);font-size:19px;line-height:1.25;margin:0 0 3px;font-weight:800}
+  .cc .sub{color:var(--muted);font-size:12.5px;margin:0 0 6px}
+  #map{width:100%;margin:4px 0 2px}
+  #map svg{width:100%;height:auto;display:block}
+  .prov{stroke:#fff;stroke-width:.7;cursor:default;transition:opacity .1s}
+  .prov:hover{opacity:.82}
+  .lab{font:700 12px Arial;pointer-events:none;text-anchor:middle;paint-order:stroke fill}
+  .legend{display:flex;align-items:center;gap:8px;justify-content:center;margin:6px 0 2px;font-size:11.5px;color:#33424f}
+  .legend .sw{width:34px;height:14px;display:inline-block}
+  .axis{text-align:center;font-size:12.5px;color:var(--muted);margin:8px 0 14px;font-weight:600}
+  .barwrap{margin:0 0 6px}
+  .barwrap .cap{font-size:12px;color:var(--muted);font-weight:600;margin:0 0 6px}
+  .bar-row{display:flex;align-items:center;gap:8px;margin:3px 0;font-size:12px;cursor:default}
+  .bar-row:hover .bar{filter:brightness(1.08)}
+  .bar-code{width:32px;text-align:right;font-weight:700;color:#33424f;flex:none;font-size:11.5px}
+  .bar-track{flex:1;background:#f1f4f6;border-radius:3px;overflow:hidden}
+  .bar{display:block;height:16px;border-radius:3px;min-width:2px}
+  .bar-val{width:58px;font-weight:700;color:#1b2733;flex:none;font-size:11.5px}
+  /* definitions */
+  .defs{margin:16px 0 4px;background:#f7fafb;border:1px solid #e7eef2;border-radius:8px;padding:12px 14px}
+  .defs h2{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--ink);margin:0 0 8px;font-weight:800}
+  .defs dl{margin:0;display:grid;grid-template-columns:1fr;gap:7px}
+  .defs dt{font-weight:800;font-size:12px;color:#26333f}
+  .defs dd{margin:1px 0 0;font-size:11.5px;color:#56656f;line-height:1.45}
+  /* credits */
+  .credits{margin-top:14px;border-top:1px solid #eef0f2;padding-top:12px;display:grid;gap:9px}
+  .credit{display:grid;grid-template-columns:96px 1fr;gap:10px;align-items:start}
+  .credit .tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;
+    color:#fff;background:var(--ink);border-radius:4px;padding:3px 0;text-align:center}
+  .credit .tag.neu{background:#6b7884}
+  .credit .txt{font-size:11.5px;color:#5b6b78;line-height:1.5}
+  .credit .txt b{color:#3a4954}
+  .credit .txt a{color:#3a4954}
+  #tt{position:fixed;pointer-events:none;background:#0f2233;color:#fff;padding:9px 11px;border-radius:8px;
+    font-size:12px;line-height:1.55;max-width:290px;opacity:0;transition:opacity .1s;z-index:10;
+    box-shadow:0 6px 20px rgba(0,0,0,.3)}
+  #tt b{color:#ffd98a}
+  #tt .tt-sub{color:#aac4e8;font-size:11px}
+</style>
+</head>
+<body>
+<div class="cc">
+  <h1>Residential GHG emissions per household</h1>
+  <p class="sub">From on-site fossil fuel combustion, by province. Darker = higher emissions per household. 2023 NRCan CEUD.</p>
+
+  <div id="map" role="img" aria-label="Choropleth map of Canada showing residential greenhouse gas emissions per household (from on-site fossil fuel combustion) by province, 2023."></div>
+  <div class="legend" id="legend"></div>
+  <div class="axis">Tonnes CO&#x2082;e per household &middot; on-site combustion (electricity-related emissions excluded)</div>
+
+  <div class="barwrap">
+    <p class="cap">Ranked by emissions per household, highest first</p>
+    <div id="bars" role="img" aria-label="Bar chart of residential GHG per household, sorted from highest to lowest."></div>
+  </div>
+
+  <div class="defs">
+    <h2>Notes</h2>
+    <dl>
+      <dt>What is measured</dt>
+      <dd>Greenhouse gas emissions (in tonnes CO&#x2082;e) from burning fossil fuels and wood directly in homes: natural gas, heating oil, propane, coal, and wood. Electricity-related GHG are excluded at the provincial level in the source dataset because provincial grids vary enormously in carbon intensity and are accounted for separately in Canada&rsquo;s national emissions inventory.</dd>
+      <dt>Why Quebec and Newfoundland appear lowest</dt>
+      <dd>Both provinces heat predominantly with electricity from hydropower, producing very little on-site combustion. Their low values reflect minimal oil or gas burned inside homes, not necessarily lower energy use overall.</dd>
+      <dt>Precision and methodology</dt>
+      <dd>Per-household GHG is derived from each province&rsquo;s CEUD GHG intensity (t/TJ) multiplied by total residential energy use (PJ), then divided by the provincial household count. All three inputs are from the same CEUD provincial Table 1 (2023). For small provinces (NL, PEI, NB), the underlying energy figures carry more model uncertainty than for larger ones.</dd>
+      <dt>Territories</dt>
+      <dd>Yukon, the Northwest Territories, and Nunavut are not covered by the CEUD provincial tables used here and appear in grey on the map.</dd>
+    </dl>
+  </div>
+
+  <div class="credits">
+    <div class="credit"><span class="tag">Data source</span>
+      <span class="txt"><b>Natural Resources Canada</b>, Comprehensive Energy Use Database (CEUD) 2023, Residential Sector, Table 1 (Secondary Energy Use and GHG Emissions by Energy Source) for each province. Retrieved June 2026. <a href="https://oee.nrcan.gc.ca/corporate/statistics/neud/dpa/menus/trends/comprehensive/trends_res_ca.cfm" rel="noopener noreferrer">oee.nrcan.gc.ca</a>.</span></div>
+    <div class="credit"><span class="tag neu">Method</span>
+      <span class="txt">GHG per household = (GHG intensity &times; total residential energy use) &divide; provincial household count. All inputs from CEUD provincial Table 1, 2023 edition. Both GHG and household counts are CEUD model-based estimates, derived from the Survey of Household Energy Use and Statistics Canada population data.</span></div>
+  </div>
+</div>
+<div id="tt"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script>
+(function(){
+  // ghg = t CO2e/household (derived from CEUD intensity method)
+  // totalMt = published CEUD total GHG excl. electricity (Mt)
+  // hh = CEUD household count (thousands)
+  var DATA = {
+    "Newfoundland and Labrador": { ghg: 1.07, totalMt: 0.2, hh: 230,  fuel: "Heating oil (declining); 77% hydro-electric" },
+    "Prince Edward Island":      { ghg: 2.43, totalMt: 0.2, hh: 72,   fuel: "Heating oil (~50% by energy)" },
+    "Nova Scotia":               { ghg: 2.28, totalMt: 1.0, hh: 437,  fuel: "Heating oil (~35%); shifting to heat pumps" },
+    "New Brunswick":             { ghg: 1.17, totalMt: 0.4, hh: 353,  fuel: "Heating oil (~14%); 73% electric" },
+    "Quebec":                    { ghg: 0.76, totalMt: 2.9, hh: 3788, fuel: "78% hydro-electric; natural gas and oil" },
+    "Ontario":                   { ghg: 2.73, totalMt: 16.1,hh: 5900, fuel: "Natural gas (~62%)" },
+    "Manitoba":                  { ghg: 1.93, totalMt: 1.0, hh: 531,  fuel: "Natural gas (~37%); 61% hydro-electric" },
+    "Saskatchewan":              { ghg: 3.74, totalMt: 1.7, hh: 464,  fuel: "Natural gas (~71%)" },
+    "Alberta":                   { ghg: 4.82, totalMt: 8.0, hh: 1671, fuel: "Natural gas (~78%)" },
+    "British Columbia":          { ghg: 1.84, totalMt: 4.0, hh: 2177, fuel: "Natural gas (~49%); 48% hydro-electric" }
+  };
+  DATA["Québec"] = DATA["Quebec"];
+
+  var CODE = {
+    "Newfoundland and Labrador":"NL","Prince Edward Island":"PE","Nova Scotia":"NS",
+    "New Brunswick":"NB","Quebec":"QC","Québec":"QC","Ontario":"ON","Manitoba":"MB",
+    "Saskatchewan":"SK","Alberta":"AB","British Columbia":"BC"
+  };
+
+  // ColorBrewer Oranges, 5-class (colour-blind safe)
+  var STEPS = [
+    { max: 1.0, c: '#feedde' },
+    { max: 2.0, c: '#fdbe85' },
+    { max: 3.0, c: '#fd8d3c' },
+    { max: 4.0, c: '#e6550d' },
+    { max: 6.0, c: '#a63603' }
+  ];
+  function col(v){
+    for(var i = 0; i < STEPS.length; i++) if(v <= STEPS[i].max) return STEPS[i].c;
+    return '#a63603';
+  }
+
+  // Legend
+  var lg = document.getElementById('legend');
+  var rh = '<span style="margin-right:6px">Lower emissions</span>';
+  STEPS.forEach(function(s){ rh += '<span class="sw" style="background:' + s.c + '"></span>'; });
+  rh += '<span style="margin-left:6px">Higher emissions</span>';
+  lg.innerHTML = rh;
+
+  // Build sorted array
+  var arr = Object.keys(DATA)
+    .filter(function(n){ return n !== 'Québec'; })
+    .map(function(n){
+      return { n: n, code: CODE[n] || '', v: DATA[n].ghg, d: DATA[n] };
+    });
+  arr.sort(function(a, b){ return b.v - a.v; });
+
+  // Bar chart
+  var bars = document.getElementById('bars');
+  arr.forEach(function(d){
+    var row = document.createElement('div');
+    row.className = 'bar-row';
+    row.innerHTML =
+      '<span class="bar-code">' + d.code + '</span>'
+      + '<span class="bar-track"><span class="bar" style="width:'
+        + (d.v / 5.5 * 100).toFixed(1) + '%;background:' + col(d.v) + '"></span></span>'
+      + '<span class="bar-val">' + d.v.toFixed(1) + '&thinsp;t</span>';
+    row.addEventListener('mousemove', mkTip(d.n, d.d));
+    row.addEventListener('mouseleave', hide);
+    bars.appendChild(row);
+  });
+
+  // Map
+  var W = 720, H = 560;
+  var svg = d3.select('#map').append('svg').attr('viewBox', '0 0 ' + W + ' ' + H);
+
+  d3.json('https://cdn.jsdelivr.net/npm/datamaps@0.5.10/src/js/data/can.topo.json')
+    .then(function(topo){
+      var fc = topojson.feature(topo, topo.objects.can);
+      fc.features = fc.features.filter(function(f){ return f.properties.name; });
+
+      var proj = d3.geoConicConformal()
+        .rotate([95, 0]).parallels([49, 77])
+        .fitExtent([[8, 8], [W - 8, H - 8]], fc);
+      var path = d3.geoPath(proj);
+
+      // Province shapes
+      svg.selectAll('path').data(fc.features).join('path')
+        .attr('class', 'prov')
+        .attr('d', path)
+        .attr('fill', function(d){
+          var nm = d.properties.name;
+          return DATA[nm] ? col(DATA[nm].ghg) : '#dde3e7';
+        })
+        .on('mousemove', function(e, d){
+          var n = d.properties.name;
+          if(n === 'Québec') n = 'Quebec';
+          if(!DATA[n]){ hide(); return; }
+          mkTip(n, DATA[n])(e);
+        })
+        .on('mouseleave', hide);
+
+      // Labels
+      svg.selectAll('text.lab')
+        .data(fc.features.filter(function(f){ return DATA[f.properties.name] != null; }))
+        .join('text').attr('class', 'lab')
+        .attr('fill', function(d){
+          return DATA[d.properties.name].ghg >= 3.5 ? '#fff' : '#5a2a00';
+        })
+        .attr('stroke', function(d){
+          return DATA[d.properties.name].ghg >= 3.5
+            ? 'rgba(60,10,0,0.5)'
+            : 'rgba(255,255,255,0.85)';
+        })
+        .attr('stroke-width', 2.5)
+        .attr('transform', function(d){
+          var c = path.centroid(d), n = d.properties.name;
+          if(n === 'Nova Scotia')               c = [c[0] + 26, c[1] + 22];
+          if(n === 'Prince Edward Island')      c = [c[0] + 14, c[1] - 8];
+          if(n === 'Newfoundland and Labrador') c = [c[0] + 18, c[1] - 12];
+          return 'translate(' + c + ')';
+        })
+        .text(function(d){
+          var n = d.properties.name;
+          if(n === 'Québec') n = 'Quebec';
+          return DATA[n].ghg.toFixed(1) + ' t';
+        });
+    })
+    .catch(function(){
+      document.getElementById('map').innerHTML =
+        '<p style="color:#a33;font-size:13px;padding:8px 0">Map requires internet access; the bar chart above still works.</p>';
+    })
+    .finally(function(){
+      setTimeout(function(){
+        window.parent.postMessage({ type: 'chart-height', height: document.body.scrollHeight }, '*');
+      }, 100);
+    });
+
+  // Tooltip
+  var tt = document.getElementById('tt');
+  function mkTip(n, d){
+    return function(e){
+      var nm = (n === 'Québec') ? 'Quebec' : n;
+      tt.innerHTML = '<b>' + nm + '</b>'
+        + '<br>' + d.ghg.toFixed(2) + ' t CO&#x2082;e per household'
+        + '<br><span class="tt-sub">' + d.totalMt + ' Mt total &middot; '
+        + (d.hh).toLocaleString() + ',000 households</span>'
+        + '<br><span class="tt-sub">Main heating: ' + d.fuel + '</span>';
+      tt.style.opacity = 1;
+      var x = e.clientX + 14, y = e.clientY + 14;
+      if(x > window.innerWidth - 280) x = e.clientX - 280;
+      tt.style.top = y + 'px';
+      tt.style.left = x + 'px';
+    };
+  }
+  function hide(){ tt.style.opacity = 0; }
+})();
+</script>
+</body>
+</html>

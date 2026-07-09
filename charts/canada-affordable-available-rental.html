@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rental Homes Affordable &amp; Available per 100 Lowest-Income Renter Households - Canada</title>
+<style>
+  :root{ --ink:#143b5e; --muted:#5b6b78; }
+  *{box-sizing:border-box}
+  .cc{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:#1b2733;max-width:720px;margin:0 auto;padding:20px 18px 22px;background:#fff;border:1px solid #f0e9d2}
+  .cc h1{color:var(--ink);font-size:19px;line-height:1.25;margin:0 0 3px;font-weight:800}
+  .cc .sub{color:var(--muted);font-size:12.5px;margin:0 0 6px}
+  #map{width:100%;margin:4px 0 2px}
+  #map svg{width:100%;height:auto;display:block}
+  .prov{stroke:#fff;stroke-width:.7;cursor:default;transition:opacity .1s}
+  .prov:hover{opacity:.82}
+  .lab{font:700 13px Arial;pointer-events:none;text-anchor:middle;paint-order:stroke fill}
+  .legend{display:flex;align-items:center;gap:8px;justify-content:center;margin:6px 0 2px;font-size:11.5px;color:#33424f}
+  .legend .sw{width:34px;height:14px;display:inline-block}
+  .axis{text-align:center;font-size:12.5px;color:var(--muted);margin:8px 0 14px;font-weight:600}
+  .barwrap{margin:0 0 6px}
+  .barwrap .cap{font-size:12px;color:var(--muted);font-weight:600;margin:0 0 6px}
+  .bar-row{display:flex;align-items:center;gap:8px;margin:3px 0;font-size:12px;cursor:default}
+  .bar-row:hover .bar{filter:brightness(1.08)}
+  .bar-code{width:28px;text-align:right;font-weight:700;color:#33424f;flex:none}
+  .bar-track{flex:1;background:#f1f4f6;border-radius:3px;overflow:hidden}
+  .bar{display:block;height:16px;border-radius:3px;min-width:2px}
+  .bar-val{width:26px;font-weight:700;color:#1b2733;flex:none}
+  /* definitions */
+  .defs{margin:16px 0 4px;background:#f7fafb;border:1px solid #e7eef2;border-radius:8px;padding:12px 14px}
+  .defs h2{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--ink);margin:0 0 8px;font-weight:800}
+  .defs dl{margin:0;display:grid;grid-template-columns:1fr;gap:7px}
+  .defs dt{font-weight:800;font-size:12px;color:#26333f}
+  .defs dd{margin:1px 0 0;font-size:11.5px;color:#56656f;line-height:1.45}
+  /* credits */
+  .credits{margin-top:14px;border-top:1px solid #eef0f2;padding-top:12px;display:grid;gap:9px}
+  .credit{display:grid;grid-template-columns:96px 1fr;gap:10px;align-items:start}
+  .credit .tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;
+    color:#fff;background:var(--ink);border-radius:4px;padding:3px 0;text-align:center}
+  .credit .tag.alt{background:#9a6b1f}
+  .credit .tag.neu{background:#6b7884}
+  .credit .txt{font-size:11.5px;color:#5b6b78;line-height:1.5}
+  .credit .txt b{color:#3a4954}
+  #tt{position:fixed;pointer-events:none;background:#0f2233;color:#fff;padding:9px 11px;border-radius:8px;
+    font-size:12px;line-height:1.45;max-width:250px;opacity:0;transition:opacity .1s;z-index:10;box-shadow:0 6px 20px rgba(0,0,0,.3)}
+  #tt b{color:#ffd98a}
+</style>
+</head>
+<body>
+<div class="cc">
+  <h1>Rental homes affordable &amp; available per 100 lowest-income renter households</h1>
+  <p class="sub">By province &amp; territory. Darker = deeper shortage. 2021 Census of Population.</p>
+
+  <div id="map" role="img" aria-label="Choropleth map of Canada: affordable and available rental homes per 100 lowest-income renter households by province and territory."></div>
+  <div class="legend" id="legend"></div>
+  <div class="axis">Affordable &amp; available rental homes per 100 lowest-income renter households</div>
+
+  <div class="barwrap">
+    <p class="cap">Ranked, lowest (deepest shortage) first</p>
+    <div id="bars" role="img" aria-label="Sorted bar chart of the same values."></div>
+  </div>
+
+  <div class="defs">
+    <h2>What the terms mean</h2>
+    <dl>
+      <dt>Lowest-income renter households</dt>
+      <dd>The poorest 20% of renter (tenant) households in each province/territory - the bottom <b>income quintile</b>. Used here as Canada's stand-in for the U.S. "extremely low-income" group.</dd>
+      <dt>Affordable &amp; available</dt>
+      <dd>A home a lowest-income renter can occupy for less than 30% of their income. Measured here as the number of lowest-income renters actually housed below that threshold (the Census does not count vacant units).</dd>
+      <dt>Shelter-cost-to-income ratio (STIR)</dt>
+      <dd>Share of a household's total before-tax income spent on shelter (rent + utilities, etc.). Under 30% is considered <b>affordable</b>; 30% or more means the household is <b>cost-burdened</b>.</dd>
+      <dt>Per 100</dt>
+      <dd>Of every 100 lowest-income renter households, how many are housed affordably. Lower = deeper shortage.</dd>
+    </dl>
+  </div>
+
+  <div class="credits">
+    <div class="credit"><span class="tag alt">Inspiration</span>
+      <span class="txt"><b>National Low Income Housing Coalition (NLIHC)</b> - <i>The Gap: A Shortage of Affordable Homes</i> (March 2026), which maps this measure for U.S. states. This is an independent Canadian recreation of that idea; it is <b>not affiliated with or endorsed by NLIHC</b>.</span></div>
+    <div class="credit"><span class="tag">Data source</span>
+      <span class="txt"><b>Statistics Canada</b>, Census of Population 2021 - Table 98-10-0252-01, renter households by household total income group × shelter-cost-to-income ratio. Retrieved 19 Jun 2026. DOI: 10.25318/9810025201-eng.</span></div>
+    <div class="credit"><span class="tag neu">Method</span>
+      <span class="txt">The lowest income quintile stands in for NLIHC's "extremely low income"; figures use the 2021 Census (NLIHC uses 2024 data) and exclude vacant units, so they slightly understate available supply. Results were cross-checked against Statistics Canada's separately published renter cost-burden rates.</span></div>
+  </div>
+</div>
+<div id="tt"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script>
+(function(){
+  var V={ "Newfoundland and Labrador":23.3,"Prince Edward Island":31.4,"Nova Scotia":22.7,
+    "New Brunswick":33.3,"Quebec":29.8,"Québec":29.8,"Ontario":26.6,"Manitoba":23.8,
+    "Saskatchewan":21.1,"Alberta":16.3,"British Columbia":19.6,"Yukon":37.3,
+    "Northwest Territories":62.4,"Nunavut":82.3 };
+  var CODE={ "Newfoundland and Labrador":"NL","Prince Edward Island":"PE","Nova Scotia":"NS",
+    "New Brunswick":"NB","Quebec":"QC","Québec":"QC","Ontario":"ON","Manitoba":"MB",
+    "Saskatchewan":"SK","Alberta":"AB","British Columbia":"BC","Yukon":"YT",
+    "Northwest Territories":"NT","Nunavut":"NU" };
+  var M={ "Newfoundland and Labrador":{r:53615,q:10723,b:32.8},"Prince Edward Island":{r:19985,q:3997,b:30.6},
+    "Nova Scotia":{r:138920,q:27784,b:34.7},"New Brunswick":{r:88190,q:17638,b:28.5},
+    "Quebec":{r:1493505,q:298701,b:25.7},"Ontario":{r:1722000,q:344400,b:39.0},
+    "Manitoba":{r:155090,q:31018,b:33.8},"Saskatchewan":{r:117550,q:23510,b:33.6},
+    "Alberta":{r:463570,q:92714,b:34.6},"British Columbia":{r:663870,q:132774,b:38.2},
+    "Yukon":{r:5530,q:1106,b:25.2},"Northwest Territories":{r:7010,q:1402,b:15.7},
+    "Nunavut":{r:8025,q:1605,b:5.5} }; M["Québec"]=M["Quebec"];
+
+  var STEPS=[{max:18,c:'#7F0000'},{max:21,c:'#B30E0E'},{max:24,c:'#D7301F'},
+    {max:28,c:'#EF6548'},{max:35,c:'#FC9272'},{max:1e9,c:'#FDD0A2'}];
+  function col(v){for(var i=0;i<STEPS.length;i++)if(v<=STEPS[i].max)return STEPS[i].c;}
+
+  var lg=document.getElementById('legend');
+  var rh='<span style="margin-right:6px">Deeper shortage</span>';
+  STEPS.forEach(function(s){rh+='<span class="sw" style="background:'+s.c+'"></span>';});
+  rh+='<span style="margin-left:6px">Less shortage</span>'; lg.innerHTML=rh;
+
+  var bars=document.getElementById('bars');
+  var arr=Object.keys(M).map(function(n){return {n:n,code:CODE[n],v:V[n],m:M[n]};})
+            .filter(function(d,i,a){return a.findIndex(function(x){return x.code===d.code;})===i;});
+  arr.sort(function(a,b){return a.v-b.v;});
+  arr.forEach(function(d){var row=document.createElement('div');row.className='bar-row';
+    row.innerHTML='<span class="bar-code">'+d.code+'</span><span class="bar-track"><span class="bar" style="width:'+(d.v/85*100).toFixed(1)+'%;background:'+col(d.v)+'"></span></span><span class="bar-val">'+d.v+'</span>';
+    row.addEventListener('mousemove',mk(d.n,d.v,d.m));row.addEventListener('mouseleave',hide);bars.appendChild(row);});
+
+  var W=720,H=560,svg=d3.select('#map').append('svg').attr('viewBox','0 0 '+W+' '+H);
+  d3.json('https://cdn.jsdelivr.net/npm/datamaps@0.5.10/src/js/data/can.topo.json').then(function(topo){
+    var fc=topojson.feature(topo,topo.objects.can);fc.features=fc.features.filter(function(f){return f.properties.name;});
+    var proj=d3.geoConicConformal().rotate([95,0]).parallels([49,77]).fitExtent([[8,8],[W-8,H-8]],fc);
+    var path=d3.geoPath(proj);
+    svg.selectAll('path').data(fc.features).join('path').attr('class','prov').attr('d',path)
+      .attr('fill',function(d){var v=V[d.properties.name];return v==null?'#dde3e7':col(v);})
+      .on('mousemove',function(e,d){var n=d.properties.name;if(V[n]==null){hide();return;}mk(n,V[n],M[n])(e);})
+      .on('mouseleave',hide);
+    svg.selectAll('text.lab').data(fc.features.filter(function(f){return V[f.properties.name]!=null;}))
+      .join('text').attr('class','lab').attr('fill',function(d){return V[d.properties.name]<=28?'#fff':'#5a3000';})
+      .attr('stroke',function(d){return V[d.properties.name]<=28?'rgba(60,0,0,0.45)':'rgba(255,255,255,0.85)';})
+      .attr('stroke-width',2.5)
+      .attr('transform',function(d){var c=path.centroid(d),n=d.properties.name;
+        if(n==="Nova Scotia")              c=[c[0]+26,c[1]+22];
+        if(n==="Prince Edward Island")     c=[c[0]+14,c[1]-8];
+        if(n==="Newfoundland and Labrador")c=[c[0]+18,c[1]-12];
+        return 'translate('+c+')';})
+      .text(function(d){return Math.round(V[d.properties.name]);});
+  }).catch(function(){document.getElementById('map').innerHTML='<p style="color:#a33;font-size:13px">Map needs internet; the bar chart and data.csv still work.</p>';})
+  .finally(function(){
+    setTimeout(function(){
+      window.parent.postMessage({type:'chart-height',height:document.body.scrollHeight},'*');
+    }, 100);
+  });
+
+  var tt=document.getElementById('tt');
+  function mk(n,v,m){return function(e){var nm=n==="Québec"?"Quebec":n;
+    tt.innerHTML='<b>'+nm+'</b><br>'+v+' affordable &amp; available homes per 100<br>lowest-income renter households<br>'+
+      '<span style="opacity:.82">Lowest-income renters: '+m.q.toLocaleString()+'<br>All renter households: '+m.r.toLocaleString()+'<br>Renters cost-burdened (≥30%): '+m.b+'%</span>';
+    tt.style.opacity=1;var x=e.clientX+14,y=e.clientY+14;if(x>window.innerWidth-235)x=e.clientX-235;tt.style.top=y+'px';tt.style.left=x+'px';};}
+  function hide(){tt.style.opacity=0;}
+})();
+</script>
+</body>
+</html>

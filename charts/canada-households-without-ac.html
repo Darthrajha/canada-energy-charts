@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Households without air conditioning: Canada</title>
+<style>
+  :root{ --ink:#143b5e; --muted:#5b6b78; }
+  *{box-sizing:border-box}
+  body{margin:0;padding:0;background:#fff}
+  .cc{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:#1b2733;max-width:720px;margin:0 auto;padding:20px 18px 22px;background:#fff;border:1px solid #f0e9d2}
+  .cc h1{color:var(--ink);font-size:19px;line-height:1.25;margin:0 0 3px;font-weight:800}
+  .cc .sub{color:var(--muted);font-size:12.5px;margin:0 0 6px}
+  #map{width:100%;margin:4px 0 2px}
+  #map svg{width:100%;height:auto;display:block}
+  .prov{stroke:#fff;stroke-width:.7;cursor:default;transition:opacity .1s}
+  .prov:hover{opacity:.82}
+  .lab{font:700 12px Arial;pointer-events:none;text-anchor:middle;paint-order:stroke fill}
+  .legend{display:flex;align-items:center;gap:8px;justify-content:center;margin:6px 0 2px;font-size:11.5px;color:#33424f}
+  .legend .sw{width:34px;height:14px;display:inline-block}
+  .axis{text-align:center;font-size:12.5px;color:var(--muted);margin:8px 0 14px;font-weight:600}
+  .barwrap{margin:0 0 6px}
+  .barwrap .cap{font-size:12px;color:var(--muted);font-weight:600;margin:0 0 6px}
+  .bar-row{display:flex;align-items:center;gap:8px;margin:3px 0;font-size:12px;cursor:default}
+  .bar-row:hover .bar{filter:brightness(1.08)}
+  .bar-code{width:32px;text-align:right;font-weight:700;color:#33424f;flex:none;font-size:11.5px}
+  .bar-track{flex:1;background:#f1f4f6;border-radius:3px;overflow:hidden}
+  .bar{display:block;height:16px;border-radius:3px;min-width:2px}
+  .bar-val{width:58px;font-weight:700;color:#1b2733;flex:none;font-size:11.5px}
+  .est{font-size:10px;color:var(--muted);font-style:italic;font-weight:400;margin-left:1px}
+  /* definitions */
+  .defs{margin:16px 0 4px;background:#f7fafb;border:1px solid #e7eef2;border-radius:8px;padding:12px 14px}
+  .defs h2{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--ink);margin:0 0 8px;font-weight:800}
+  .defs dl{margin:0;display:grid;grid-template-columns:1fr;gap:7px}
+  .defs dt{font-weight:800;font-size:12px;color:#26333f}
+  .defs dd{margin:1px 0 0;font-size:11.5px;color:#56656f;line-height:1.45}
+  /* credits */
+  .credits{margin-top:14px;border-top:1px solid #eef0f2;padding-top:12px;display:grid;gap:9px}
+  .credit{display:grid;grid-template-columns:96px 1fr;gap:10px;align-items:start}
+  .credit .tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;
+    color:#fff;background:var(--ink);border-radius:4px;padding:3px 0;text-align:center}
+  .credit .tag.alt{background:#9a6b1f}
+  .credit .tag.neu{background:#6b7884}
+  .credit .txt{font-size:11.5px;color:#5b6b78;line-height:1.5}
+  .credit .txt b{color:#3a4954}
+  #tt{position:fixed;pointer-events:none;background:#0f2233;color:#fff;padding:9px 11px;border-radius:8px;
+    font-size:12px;line-height:1.5;max-width:260px;opacity:0;transition:opacity .1s;z-index:10;
+    box-shadow:0 6px 20px rgba(0,0,0,.3)}
+  #tt b{color:#ffd98a}
+  #tt .tt-est{color:#aac4e8;font-size:11px}
+</style>
+</head>
+<body>
+<div class="cc">
+  <h1>Households without air conditioning</h1>
+  <p class="sub">By province. Darker = fewer households with AC. 2021 Households and the Environment Survey, Statistics Canada.</p>
+
+  <div id="map" role="img" aria-label="Choropleth map of Canada showing the percentage of households without air conditioning by province, 2021."></div>
+  <div class="legend" id="legend"></div>
+  <div class="axis">% of households without air conditioning (higher = fewer homes cooled)</div>
+
+  <div class="barwrap">
+    <p class="cap">Ranked by share without AC, highest first</p>
+    <div id="bars" role="img" aria-label="Bar chart of the same values, sorted from highest to lowest percentage without air conditioning."></div>
+  </div>
+
+  <div class="defs">
+    <h2>Notes</h2>
+    <dl>
+      <dt>Source data</dt>
+      <dd>Statistics Canada, Households and the Environment Survey (HES), 2021, Table 38-10-0019-01. The HES reports the share of households with <b>at least one</b> type of air conditioner (central air, stand-alone unit, or heat pump). Values here are the complement: 100% minus that confirmed rate.</dd>
+      <dt>Data update</dt>
+      <dd>The original 2021 HES release individually named only six provinces; the remaining four (AB, BC, NS, PEI) were initially estimated here. Statistics Canada&rsquo;s September 2025 table update published 2021 figures for all ten provinces, and all values shown are now as published. The same update added a 2023 reference period showing a sharp jump in AC adoption (e.g., PEI 83%, NS 71%, BC 56% with AC).</dd>
+      <dt>Territories</dt>
+      <dd>The HES does not cover Yukon, the Northwest Territories, or Nunavut. These appear in grey on the map.</dd>
+    </dl>
+  </div>
+
+  <div class="credits">
+    <div class="credit"><span class="tag alt">Inspiration</span>
+      <span class="txt">Muhammad Shumail / <b>Homes.com</b> map of U.S. households without air conditioning by county (Census Bureau data). This is an independent Canadian equivalent at the provincial level; it is <b>not affiliated with or endorsed by</b> those sources.</span></div>
+    <div class="credit"><span class="tag">Data source</span>
+      <span class="txt"><b>Statistics Canada</b>, Households and the Environment Survey (HES) 2021, Table 38-10-0019-01. Retrieved June 2026. Context: Quick M &amp; Tjepkema M, &ldquo;The prevalence of household air conditioning in Canada,&rdquo; <i>Health Reports</i>, Vol. 34, No. 7, July 2023, Cat. no. 82-003-X.</span></div>
+    <div class="credit"><span class="tag neu">Method</span>
+      <span class="txt">All ten provinces have published 2021 HES rates (MB 90%, ON 84%, SK 75%, QC 63%, NB 56%, PEI 46%, NS 43%, AB 37%, BC 36%, NL 19% with AC). Territories excluded: not covered by HES. This chart shows <em>households without AC</em> to match the framing of the U.S. reference map; the underlying source reports <em>households with AC</em>. Pipeline: <a href="https://github.com/Darthrajha/canada-energy-charts" rel="noopener noreferrer">github.com/Darthrajha/canada-energy-charts</a>.</span></div>
+  </div>
+</div>
+<div id="tt"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script>
+(function(){
+  // withAC = % with air conditioning (2021 HES confirmed, or estimated for 4 provinces)
+  // est = true if value is estimated (not directly published by Statistics Canada for 2021)
+  var RAW = {
+    "Newfoundland and Labrador": { withAC: 19, est: false },
+    "Prince Edward Island":      { withAC: 46, est: false },
+    "Nova Scotia":               { withAC: 43, est: false },
+    "New Brunswick":             { withAC: 56, est: false },
+    "Quebec":                    { withAC: 63, est: false },
+    "Ontario":                   { withAC: 84, est: false },
+    "Manitoba":                  { withAC: 90, est: false },
+    "Saskatchewan":              { withAC: 75, est: false },
+    "Alberta":                   { withAC: 37, est: false },
+    "British Columbia":          { withAC: 36, est: false }
+  };
+  // Alias for the TopoJSON name
+  RAW["Québec"] = RAW["Quebec"];
+
+  // V = % WITHOUT air conditioning
+  var V = {};
+  Object.keys(RAW).forEach(function(n){ V[n] = 100 - RAW[n].withAC; });
+
+  var CODE = {
+    "Newfoundland and Labrador":"NL","Prince Edward Island":"PE","Nova Scotia":"NS",
+    "New Brunswick":"NB","Quebec":"QC","Québec":"QC","Ontario":"ON","Manitoba":"MB",
+    "Saskatchewan":"SK","Alberta":"AB","British Columbia":"BC"
+  };
+
+  // Color steps: higher % without AC → darker (ColorBrewer Blues, colour-blind safe)
+  var STEPS = [
+    { max: 15,  c: '#c6dbef' },
+    { max: 30,  c: '#9ecae1' },
+    { max: 50,  c: '#6baed6' },
+    { max: 65,  c: '#2171b5' },
+    { max: 100, c: '#084594' }
+  ];
+  function col(v){
+    for(var i=0;i<STEPS.length;i++) if(v<=STEPS[i].max) return STEPS[i].c;
+    return '#7F0000';
+  }
+
+  // Legend
+  var lg = document.getElementById('legend');
+  var rh = '<span style="margin-right:6px">Fewer without AC</span>';
+  STEPS.forEach(function(s){ rh += '<span class="sw" style="background:'+s.c+'"></span>'; });
+  rh += '<span style="margin-left:6px">More without AC</span>';
+  lg.innerHTML = rh;
+
+  // Build sorted array (exclude Québec alias)
+  var arr = Object.keys(RAW)
+    .filter(function(n){ return n !== 'Québec'; })
+    .map(function(n){
+      return { n: n, code: CODE[n] || '', v: V[n], withAC: RAW[n].withAC, est: RAW[n].est };
+    });
+  arr.sort(function(a,b){ return b.v - a.v; });   // highest % without AC first
+
+  // Bar chart
+  var bars = document.getElementById('bars');
+  arr.forEach(function(d){
+    var row = document.createElement('div');
+    row.className = 'bar-row';
+    var codeLabel = d.code + (d.est ? '*' : '');
+    var valLabel  = d.v + '%' + (d.est ? '&thinsp;<span class="est">est.</span>' : '');
+    row.innerHTML =
+      '<span class="bar-code">' + codeLabel + '</span>'
+      + '<span class="bar-track"><span class="bar" style="width:'
+        + (d.v / 90 * 100).toFixed(1) + '%;background:' + col(d.v) + '"></span></span>'
+      + '<span class="bar-val">' + valLabel + '</span>';
+    row.addEventListener('mousemove', mkTip(d.n, d.v, d.withAC, d.est));
+    row.addEventListener('mouseleave', hide);
+    bars.appendChild(row);
+  });
+
+  // Map
+  var W = 720, H = 560;
+  var svg = d3.select('#map').append('svg').attr('viewBox', '0 0 ' + W + ' ' + H);
+
+  d3.json('https://cdn.jsdelivr.net/npm/datamaps@0.5.10/src/js/data/can.topo.json')
+    .then(function(topo){
+      var fc = topojson.feature(topo, topo.objects.can);
+      fc.features = fc.features.filter(function(f){ return f.properties.name; });
+
+      var proj = d3.geoConicConformal()
+        .rotate([95, 0]).parallels([49, 77])
+        .fitExtent([[8, 8], [W - 8, H - 8]], fc);
+      var path = d3.geoPath(proj);
+
+      // Province shapes
+      svg.selectAll('path').data(fc.features).join('path')
+        .attr('class', 'prov')
+        .attr('d', path)
+        .attr('fill', function(d){
+          var nm = d.properties.name;
+          return V[nm] != null ? col(V[nm]) : '#dde3e7';
+        })
+        .on('mousemove', function(e, d){
+          var n = d.properties.name;
+          if(n === 'Québec') n = 'Quebec';
+          if(V[n] == null){ hide(); return; }
+          mkTip(n, V[n], RAW[n] ? RAW[n].withAC : null, RAW[n] ? RAW[n].est : false)(e);
+        })
+        .on('mouseleave', hide);
+
+      // Labels
+      svg.selectAll('text.lab')
+        .data(fc.features.filter(function(f){ return V[f.properties.name] != null; }))
+        .join('text').attr('class', 'lab')
+        .attr('fill', function(d){ return V[d.properties.name] >= 50 ? '#fff' : '#0b3058'; })
+        .attr('stroke', function(d){ return V[d.properties.name] >= 50 ? 'rgba(0,20,60,0.5)' : 'rgba(255,255,255,0.85)'; })
+        .attr('stroke-width', 2.5)
+        .attr('transform', function(d){
+          var c = path.centroid(d), n = d.properties.name;
+          if(n === 'Nova Scotia')               c = [c[0] + 26, c[1] + 22];
+          if(n === 'Prince Edward Island')      c = [c[0] + 14, c[1] - 8];
+          if(n === 'Newfoundland and Labrador') c = [c[0] + 18, c[1] - 12];
+          return 'translate(' + c + ')';
+        })
+        .text(function(d){
+          var n = d.properties.name;
+          if(n === 'Québec') n = 'Quebec';
+          var suffix = RAW[n] && RAW[n].est ? '*' : '';
+          return Math.round(V[n]) + '%' + suffix;
+        });
+    })
+    .catch(function(){
+      document.getElementById('map').innerHTML =
+        '<p style="color:#a33;font-size:13px;padding:8px 0">Map requires internet access; the bar chart above still works.</p>';
+    })
+    .finally(function(){
+      setTimeout(function(){
+        window.parent.postMessage({ type: 'chart-height', height: document.body.scrollHeight }, '*');
+      }, 100);
+    });
+
+  // Tooltip
+  var tt = document.getElementById('tt');
+  function mkTip(n, vWithout, vWith, est){
+    return function(e){
+      var nm = (n === 'Québec') ? 'Quebec' : n;
+      var estLine = est
+        ? '<br><span class="tt-est">Estimated: Statistics Canada did not publish<br>an individual 2021 figure for this province.</span>'
+        : '';
+      tt.innerHTML = '<b>' + nm + '</b>'
+        + '<br>' + vWithout + '% of households without AC' + estLine
+        + (vWith != null
+          ? '<br><span style="opacity:.82">' + vWith + '% with AC (2021 HES)</span>'
+          : '');
+      tt.style.opacity = 1;
+      var x = e.clientX + 14, y = e.clientY + 14;
+      if(x > window.innerWidth - 260) x = e.clientX - 260;
+      tt.style.top = y + 'px'; tt.style.left = x + 'px';
+    };
+  }
+  function hide(){ tt.style.opacity = 0; }
+})();
+</script>
+</body>
+</html>

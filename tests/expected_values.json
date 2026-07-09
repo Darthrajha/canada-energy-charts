@@ -1,0 +1,16 @@
+{
+  "_comment": "Values embedded in the published charts at darthrajha.github.io. Tolerances in test_validation.py.",
+  "affordability_gap_per_100": {
+    "NL": 23.3, "PE": 31.4, "NS": 22.7, "NB": 33.3, "QC": 29.8,
+    "ON": 26.6, "MB": 23.8, "SK": 21.1, "AB": 16.3, "BC": 19.6,
+    "YT": 37.3, "NT": 62.4, "NU": 82.3
+  },
+  "pct_with_ac_2021": {
+    "NL": 19, "PE": 46, "NS": 43, "NB": 56, "QC": 63,
+    "ON": 84, "MB": 90, "SK": 75, "AB": 37, "BC": 36
+  },
+  "ghg_per_household_t": {
+    "NL": 1.07, "PE": 2.43, "NS": 2.28, "NB": 1.17, "QC": 0.76,
+    "ON": 2.73, "MB": 1.93, "SK": 3.74, "AB": 4.82, "BC": 1.84
+  }
+}
