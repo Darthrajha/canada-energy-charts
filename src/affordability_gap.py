@@ -80,6 +80,12 @@ def transform(df: pd.DataFrame) -> pd.DataFrame:
         over30_lbl = "Spending 30% or more of income on shelter costs"
 
         r = float(cell.loc[total_lbl, stir_total_lbl])
+        if not r > 0:
+            raise ValueError(f"missing renter total for {geo}")
+        # Small-area cells can be suppressed or omitted under census
+        # confidentiality rules (e.g. territory income brackets); treat those
+        # as zero when accumulating. Totals are verified present above.
+        cell = cell.fillna(0.0)
         q = 0.2 * r
 
         cum, affordable = 0.0, 0.0
