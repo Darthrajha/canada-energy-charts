@@ -36,10 +36,19 @@ URL = ("https://oee.nrcan.gc.ca/corporate/statistics/neud/dpa/showTable.cfm"
 UA = {"User-Agent": "canada-energy-charts (github.com/Darthrajha/canada-energy-charts)"}
 
 
-def _row(table: pd.DataFrame, label: str) -> pd.Series:
-    hit = table[table.iloc[:, 0].astype(str).str.contains(label, regex=False, na=False)]
+def _row(table: pd.DataFrame, pattern: str) -> pd.Series:
+    """Find a row by regex on the label column.
+
+    Labels are matched loosely because NRCan wraps abbreviations in <abbr>
+    markup ("GHG Intensity" may or may not render with an expansion) and cells
+    can contain footnote markers and non-breaking spaces.
+    """
+    labels = (table.iloc[:, 0].astype(str)
+              .str.replace("\xa0", " ", regex=False)
+              .str.strip())
+    hit = table[labels.str.contains(pattern, regex=True, na=False)]
     if hit.empty:
-        raise ValueError(f"row not found: {label}")
+        raise ValueError(f"row not found: {pattern!r} in {labels.tolist()[:8]}...")
     return hit.iloc[0]
 
 
@@ -53,10 +62,10 @@ def fetch_province(slug: str) -> dict:
     table = max(tables, key=len)  # the data table is the largest on the page
     year_col = [c for c in table.columns if str(c).strip() == YEAR][0]
 
-    energy_pj = _num(_row(table, "Total Energy Use")[year_col])
-    households_k = _num(_row(table, "Total Households")[year_col])
-    intensity_t_per_tj = _num(_row(table, "GHG (Greenhouse Gas) Intensity")[year_col])
-    published_mt = _num(_row(table, "Total GHG (Greenhouse Gas) Emissions Excluding Electricity")[year_col])
+    energy_pj = _num(_row(table, r"^Total Energy Use")[year_col])
+    households_k = _num(_row(table, r"^Total Households")[year_col])
+    intensity_t_per_tj = _num(_row(table, r"GHG\b.*Intensity")[year_col])
+    published_mt = _num(_row(table, r"Total GHG\b.*Excluding Electricity")[year_col])
 
     derived_t_per_hh = intensity_t_per_tj * energy_pj * 1000 / (households_k * 1000)
     derived_mt = intensity_t_per_tj * energy_pj * 1000 / 1e6
