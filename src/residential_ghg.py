@@ -20,9 +20,8 @@ from __future__ import annotations
 import io
 
 import pandas as pd
-import requests
 
-from common import PROVINCE_CODES, write_processed
+from common import PROVINCE_CODES, get, write_processed
 
 YEAR = "2023"
 JURIS = {  # CEUD jurisdiction slugs (no territories in provincial tables)
@@ -33,7 +32,7 @@ JURIS = {  # CEUD jurisdiction slugs (no territories in provincial tables)
 }
 URL = ("https://oee.nrcan.gc.ca/corporate/statistics/neud/dpa/showTable.cfm"
        "?type=CP&sector=res&juris={juris}&year={year}&rn=1&page=0")
-UA = {"User-Agent": "canada-energy-charts (github.com/Darthrajha/canada-energy-charts)"}
+MAX_DRIFT_MT = 0.15  # CEUD publishes totals rounded to 0.1 Mt
 
 
 def _row(table: pd.DataFrame, pattern: str) -> pd.Series:
@@ -57,10 +56,13 @@ def _num(value) -> float:
 
 
 def fetch_province(slug: str) -> dict:
-    html = requests.get(URL.format(juris=slug, year=YEAR), headers=UA, timeout=60).text
+    html = get(URL.format(juris=slug, year=YEAR)).text
     tables = pd.read_html(io.StringIO(html), thousands=",")
     table = max(tables, key=len)  # the data table is the largest on the page
-    year_col = [c for c in table.columns if str(c).strip() == YEAR][0]
+    year_cols = [c for c in table.columns if str(c).strip() == YEAR]
+    if not year_cols:
+        raise ValueError(f"no {YEAR} column for {slug!r}; columns: {list(table.columns)}")
+    year_col = year_cols[0]
 
     energy_pj = _num(_row(table, r"^Total Energy Use")[year_col])
     households_k = _num(_row(table, r"^Total Households")[year_col])
@@ -85,13 +87,19 @@ def fetch_province(slug: str) -> dict:
 def transform() -> pd.DataFrame:
     rows = [fetch_province(slug) for slug in JURIS]
     df = pd.DataFrame(rows).sort_values("ghg_per_household_t", ascending=False)
-    # internal consistency: derived vs published total (CEUD rounds to 0.1 Mt)
-    drift = (df["derived_total_mt"] - df["published_total_mt"]).abs()
-    if (drift > 0.15).any():
-        bad = df.loc[drift > 0.15, "province"].tolist()
-        raise AssertionError(f"derived GHG total drifts from published value: {bad}")
     return df.reset_index(drop=True)
 
 
+def check_consistency(df: pd.DataFrame) -> None:
+    """Derived provincial totals must match the published CEUD totals."""
+    drift = (df["derived_total_mt"] - df["published_total_mt"]).abs()
+    if (drift > MAX_DRIFT_MT).any():
+        bad = df.loc[drift > MAX_DRIFT_MT, "province"].tolist()
+        raise AssertionError(f"derived GHG total drifts from published value: {bad}")
+
+
 if __name__ == "__main__":
-    write_processed(transform(), "residential_ghg.csv")
+    result = transform()
+    # Write first so the CSV is available for inspection even when the check fails.
+    write_processed(result, "residential_ghg.csv")
+    check_consistency(result)

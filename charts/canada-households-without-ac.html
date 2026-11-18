@@ -88,8 +88,7 @@
 </div>
 <div id="tt"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script src="canada-map.js"></script>
 <script>
 (function(){
   // withAC = % with air conditioning (2021 HES confirmed, or estimated for 4 provinces)
@@ -164,66 +163,26 @@
     bars.appendChild(row);
   });
 
-  // Map
-  var W = 720, H = 560;
-  var svg = d3.select('#map').append('svg').attr('viewBox', '0 0 ' + W + ' ' + H);
-
-  d3.json('https://cdn.jsdelivr.net/npm/datamaps@0.5.10/src/js/data/can.topo.json')
-    .then(function(topo){
-      var fc = topojson.feature(topo, topo.objects.can);
-      fc.features = fc.features.filter(function(f){ return f.properties.name; });
-
-      var proj = d3.geoConicConformal()
-        .rotate([95, 0]).parallels([49, 77])
-        .fitExtent([[8, 8], [W - 8, H - 8]], fc);
-      var path = d3.geoPath(proj);
-
-      // Province shapes
-      svg.selectAll('path').data(fc.features).join('path')
-        .attr('class', 'prov')
-        .attr('d', path)
-        .attr('fill', function(d){
-          var nm = d.properties.name;
-          return V[nm] != null ? col(V[nm]) : '#dde3e7';
-        })
-        .on('mousemove', function(e, d){
-          var n = d.properties.name;
-          if(n === 'Québec') n = 'Quebec';
-          if(V[n] == null){ hide(); return; }
-          mkTip(n, V[n], RAW[n] ? RAW[n].withAC : null, RAW[n] ? RAW[n].est : false)(e);
-        })
-        .on('mouseleave', hide);
-
-      // Labels
-      svg.selectAll('text.lab')
-        .data(fc.features.filter(function(f){ return V[f.properties.name] != null; }))
-        .join('text').attr('class', 'lab')
-        .attr('fill', function(d){ return V[d.properties.name] >= 50 ? '#fff' : '#0b3058'; })
-        .attr('stroke', function(d){ return V[d.properties.name] >= 50 ? 'rgba(0,20,60,0.5)' : 'rgba(255,255,255,0.85)'; })
-        .attr('stroke-width', 2.5)
-        .attr('transform', function(d){
-          var c = path.centroid(d), n = d.properties.name;
-          if(n === 'Nova Scotia')               c = [c[0] + 26, c[1] + 22];
-          if(n === 'Prince Edward Island')      c = [c[0] + 14, c[1] - 8];
-          if(n === 'Newfoundland and Labrador') c = [c[0] + 18, c[1] - 12];
-          return 'translate(' + c + ')';
-        })
-        .text(function(d){
-          var n = d.properties.name;
-          if(n === 'Québec') n = 'Quebec';
-          var suffix = RAW[n] && RAW[n].est ? '*' : '';
-          return Math.round(V[n]) + '%' + suffix;
-        });
-    })
-    .catch(function(){
-      document.getElementById('map').innerHTML =
-        '<p style="color:#a33;font-size:13px;padding:8px 0">Map requires internet access; the bar chart above still works.</p>';
-    })
-    .finally(function(){
-      setTimeout(function(){
-        window.parent.postMessage({ type: 'chart-height', height: document.body.scrollHeight }, '*');
-      }, 100);
+  // Map: outlines are pre-projected in canada-map.js (same origin, no map libraries)
+  var mapEl = document.getElementById('map');
+  if (window.drawCanadaMap) {
+    drawCanadaMap(mapEl, {
+      fill: function(n){ return V[n] != null ? col(V[n]) : '#dde3e7'; },
+      label: function(n){ if(V[n] == null) return null;
+        return { text: Math.round(V[n]) + '%' + (RAW[n].est ? '*' : ''), fill: V[n] >= 50 ? '#fff' : '#0b3058', stroke: V[n] >= 50 ? 'rgba(0,20,60,0.5)' : 'rgba(255,255,255,0.85)' }; },
+      move: function(n, e){ if(V[n] == null){ hide(); return; } mkTip(n, V[n], RAW[n].withAC, RAW[n].est)(e); },
+      leave: hide
     });
+  } else {
+    mapEl.innerHTML = '<p style="color:#a33;font-size:13px;padding:8px 0">The map could not be loaded; the bar chart below still works.</p>';
+  }
+
+  // Tell the parent page how tall this chart is (used to size the popup frame)
+  function postHeight(){
+    window.parent.postMessage({ type: 'chart-height', height: document.body.scrollHeight }, '*');
+  }
+  postHeight();
+  window.addEventListener('load', postHeight);
 
   // Tooltip
   var tt = document.getElementById('tt');

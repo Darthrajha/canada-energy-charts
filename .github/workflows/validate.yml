@@ -6,31 +6,49 @@ on:
   schedule:
     - cron: "0 12 1 * *"   # monthly: catch upstream StatCan/NRCan revisions
 
+permissions:
+  contents: read
+
 jobs:
   run-pipelines:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
+          cache: pip
 
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run pipelines
+      # Each pipeline runs even if an earlier one failed, so one flaky source
+      # does not hide the state of the other two.
+      - name: Pipeline - affordability gap
         working-directory: src
-        run: |
-          python affordability_gap.py
-          python ac_coverage.py
-          python residential_ghg.py
+        run: python affordability_gap.py
+
+      - name: Pipeline - AC coverage
+        if: ${{ !cancelled() }}
+        working-directory: src
+        run: python ac_coverage.py
+
+      - name: Pipeline - residential GHG
+        if: ${{ !cancelled() }}
+        working-directory: src
+        run: python residential_ghg.py
 
       - name: Validate against published chart values
+        if: ${{ !cancelled() }}
         run: pytest -v
 
+      # Uploaded on failure too: a failed validation is exactly when the data is worth inspecting.
       - name: Upload processed data
-        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
         with:
           name: processed-data
           path: data/processed/
+          if-no-files-found: warn

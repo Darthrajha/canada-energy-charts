@@ -21,9 +21,44 @@ from pathlib import Path
 
 import pandas as pd
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 BASE = "https://www150.statcan.gc.ca"
 UA = {"User-Agent": "canada-energy-charts (github.com/Darthrajha/canada-energy-charts)"}
+
+# (connect, read) seconds. Government endpoints occasionally stall on connect.
+TIMEOUT = (15, 120)
+
+
+def _session() -> requests.Session:
+    """Session that retries transient failures with exponential backoff.
+
+    Covers connection/read timeouts and 429/5xx responses: up to five retries,
+    waiting 2, 4, 8, 16 then 32 seconds. A single dropped connection should not
+    fail a scheduled validation run.
+    """
+    retry = Retry(
+        total=5,
+        backoff_factor=2,
+        status_forcelist=(429, 500, 502, 503, 504),
+        allowed_methods=("GET",),
+    )
+    s = requests.Session()
+    s.headers.update(UA)
+    s.mount("https://", HTTPAdapter(max_retries=retry))
+    return s
+
+
+SESSION = _session()
+
+
+def get(url: str, params: dict | None = None) -> requests.Response:
+    """GET with retries; raises on a non-2xx response instead of returning an error page."""
+    r = SESSION.get(url, params=params, timeout=TIMEOUT)
+    r.raise_for_status()
+    return r
+
 
 RAW_DIR = Path(__file__).resolve().parent.parent / "data" / "raw"
 PROCESSED_DIR = Path(__file__).resolve().parent.parent / "data" / "processed"
@@ -49,11 +84,13 @@ def fetch_full_table(pid8: str) -> pd.DataFrame:
     """Download a full StatCan table as CSV (cached in data/raw)."""
     RAW_DIR.mkdir(parents=True, exist_ok=True)
     cache = RAW_DIR / f"{pid8}-eng.zip"
+    if cache.exists() and not zipfile.is_zipfile(cache):
+        cache.unlink()  # truncated or corrupt download from an earlier run
     if not cache.exists():
-        url = f"{BASE}/n1/tbl/csv/{pid8}-eng.zip"
-        r = requests.get(url, headers=UA, timeout=120)
-        r.raise_for_status()
-        cache.write_bytes(r.content)
+        r = get(f"{BASE}/n1/tbl/csv/{pid8}-eng.zip")
+        tmp = cache.with_suffix(".part")
+        tmp.write_bytes(r.content)
+        tmp.replace(cache)  # atomic: an interrupted download never leaves a half-written cache
     with zipfile.ZipFile(cache) as z:
         with z.open(f"{pid8}.csv") as f:
             return pd.read_csv(f, low_memory=False)
@@ -62,9 +99,7 @@ def fetch_full_table(pid8: str) -> pd.DataFrame:
 def fetch_metadata(pid10: str) -> str:
     """Return the raw cube-metadata CSV for a 10-digit product id."""
     url = f"{BASE}/t1/tbl1/en/dtl!downloadCubeMetaData-nonTraduit.action"
-    r = requests.get(url, params={"pid": pid10, "csvLocale": "en"}, headers=UA, timeout=60)
-    r.raise_for_status()
-    return r.text
+    return get(url, params={"pid": pid10, "csvLocale": "en"}).text
 
 
 def province_member_ids(metadata_csv: str) -> dict[str, int]:
@@ -97,9 +132,7 @@ def fetch_selected(pid10: str, selected_members: list[list[int]], latest_n: int 
         "csvLocale": "en",
         "selectedMembers": json.dumps(selected_members, separators=(",", ":")),
     }
-    r = requests.get(url, params=params, headers=UA, timeout=120)
-    r.raise_for_status()
-    return pd.read_csv(io.StringIO(r.text))
+    return pd.read_csv(io.StringIO(get(url, params=params).text))
 
 
 def write_processed(df: pd.DataFrame, name: str) -> Path:

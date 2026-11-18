@@ -73,11 +73,17 @@ def transform(df: pd.DataFrame) -> pd.DataFrame:
     for geo, g in df.groupby("GEO"):
         if geo not in PROVINCE_CODES:
             continue
-        cell = g.pivot_table(index=inc_col, columns=stir_col, values="VALUE", aggfunc="first")
         total_lbl = "Total - Total income of household"
         under30_lbl = "Spending less than 30% of income on shelter costs"
         stir_total_lbl = "Total - Shelter-cost-to-income ratio"
         over30_lbl = "Spending 30% or more of income on shelter costs"
+        cell = g.pivot_table(index=inc_col, columns=stir_col, values="VALUE", aggfunc="first")
+        # pivot_table drops any bracket whose cells are all suppressed. Restore the
+        # full grid so every lookup below resolves (to NaN) instead of raising.
+        cell = cell.reindex(
+            index=[total_lbl] + INCOME_ORDER,
+            columns=[stir_total_lbl, under30_lbl, over30_lbl],
+        )
 
         r = float(cell.loc[total_lbl, stir_total_lbl])
         if not r > 0:

@@ -91,10 +91,21 @@ inventory attributes them.
 
 ## Validation
 
-`tests/test_validation.py` compares each pipeline's output against
-`tests/expected_values.json` — the values embedded in the published charts.
+`tests/test_validation.py` ties three things together so they cannot drift
+apart unnoticed:
+
+1. each pipeline's output vs `tests/expected_values.json`;
+2. the values hardcoded in `charts/*.html` vs `tests/expected_values.json`;
+3. `charts/` in this repo vs the copies served at darthrajha.github.io.
+
 CI runs on every push and monthly (StatCan and NRCan revise tables; a scheduled
-failure is a signal to review upstream changes, not necessarily a bug).
+failure is a signal to review upstream changes, not necessarily a bug). Fetches
+retry with backoff, and the processed CSVs are uploaded as a build artifact even
+when a run fails. GitHub pauses scheduled workflows after 60 days without repo
+activity; re-enable from the Actions tab if the badge goes stale.
+
+The charts draw their map from `charts/canada-map.js`, a pre-projected,
+simplified set of province outlines, so they load no third-party libraries.
 
 ## Licences
 

@@ -86,8 +86,7 @@
 </div>
 <div id="tt"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script src="canada-map.js"></script>
 <script>
 (function(){
   var V={ "Newfoundland and Labrador":23.3,"Prince Edward Island":31.4,"Nova Scotia":22.7,
@@ -123,31 +122,26 @@
     row.innerHTML='<span class="bar-code">'+d.code+'</span><span class="bar-track"><span class="bar" style="width:'+(d.v/85*100).toFixed(1)+'%;background:'+col(d.v)+'"></span></span><span class="bar-val">'+d.v+'</span>';
     row.addEventListener('mousemove',mk(d.n,d.v,d.m));row.addEventListener('mouseleave',hide);bars.appendChild(row);});
 
-  var W=720,H=560,svg=d3.select('#map').append('svg').attr('viewBox','0 0 '+W+' '+H);
-  d3.json('https://cdn.jsdelivr.net/npm/datamaps@0.5.10/src/js/data/can.topo.json').then(function(topo){
-    var fc=topojson.feature(topo,topo.objects.can);fc.features=fc.features.filter(function(f){return f.properties.name;});
-    var proj=d3.geoConicConformal().rotate([95,0]).parallels([49,77]).fitExtent([[8,8],[W-8,H-8]],fc);
-    var path=d3.geoPath(proj);
-    svg.selectAll('path').data(fc.features).join('path').attr('class','prov').attr('d',path)
-      .attr('fill',function(d){var v=V[d.properties.name];return v==null?'#dde3e7':col(v);})
-      .on('mousemove',function(e,d){var n=d.properties.name;if(V[n]==null){hide();return;}mk(n,V[n],M[n])(e);})
-      .on('mouseleave',hide);
-    svg.selectAll('text.lab').data(fc.features.filter(function(f){return V[f.properties.name]!=null;}))
-      .join('text').attr('class','lab').attr('fill',function(d){return V[d.properties.name]<=28?'#fff':'#5a3000';})
-      .attr('stroke',function(d){return V[d.properties.name]<=28?'rgba(60,0,0,0.45)':'rgba(255,255,255,0.85)';})
-      .attr('stroke-width',2.5)
-      .attr('transform',function(d){var c=path.centroid(d),n=d.properties.name;
-        if(n==="Nova Scotia")              c=[c[0]+26,c[1]+22];
-        if(n==="Prince Edward Island")     c=[c[0]+14,c[1]-8];
-        if(n==="Newfoundland and Labrador")c=[c[0]+18,c[1]-12];
-        return 'translate('+c+')';})
-      .text(function(d){return Math.round(V[d.properties.name]);});
-  }).catch(function(){document.getElementById('map').innerHTML='<p style="color:#a33;font-size:13px">Map needs internet; the bar chart and data.csv still work.</p>';})
-  .finally(function(){
-    setTimeout(function(){
-      window.parent.postMessage({type:'chart-height',height:document.body.scrollHeight},'*');
-    }, 100);
-  });
+  // Map: outlines are pre-projected in canada-map.js (same origin, no map libraries)
+  var mapEl = document.getElementById('map');
+  if (window.drawCanadaMap) {
+    drawCanadaMap(mapEl, {
+      fill: function(n){ var v=V[n]; return v==null ? '#dde3e7' : col(v); },
+      label: function(n){ var v=V[n]; if(v==null) return null;
+        return { text: Math.round(v), fill: v<=28 ? '#fff' : '#5a3000', stroke: v<=28 ? 'rgba(60,0,0,0.45)' : 'rgba(255,255,255,0.85)' }; },
+      move: function(n,e){ if(V[n]==null){ hide(); return; } mk(n,V[n],M[n])(e); },
+      leave: hide
+    });
+  } else {
+    mapEl.innerHTML = '<p style="color:#a33;font-size:13px;padding:8px 0">The map could not be loaded; the bar chart below still works.</p>';
+  }
+
+  // Tell the parent page how tall this chart is (used to size the popup frame)
+  function postHeight(){
+    window.parent.postMessage({ type: 'chart-height', height: document.body.scrollHeight }, '*');
+  }
+  postHeight();
+  window.addEventListener('load', postHeight);
 
   var tt=document.getElementById('tt');
   function mk(n,v,m){return function(e){var nm=n==="Québec"?"Quebec":n;
