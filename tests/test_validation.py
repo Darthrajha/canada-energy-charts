@@ -22,7 +22,7 @@ import requests
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
-from common import PROVINCE_CODES  # noqa: E402
+from common import PROVINCE_CODES, SNAPSHOT_DIR, load_manifest, sha256_of  # noqa: E402
 
 EXPECTED = json.loads((ROOT / "tests" / "expected_values.json").read_text())
 CHARTS = ROOT / "charts"
@@ -100,6 +100,17 @@ def _chart_values(filename: str, value_pattern: str, block_pattern: str | None =
 )
 def test_chart_matches_expected(key, filename, value_pattern, block_pattern):
     assert _chart_values(filename, value_pattern, block_pattern) == EXPECTED[key]
+
+
+# --- snapshots: committed source files must match their manifest -------------
+
+def test_snapshots_match_manifest():
+    manifest = load_manifest()
+    on_disk = {p.name for p in SNAPSHOT_DIR.iterdir() if p.name != "MANIFEST.json"} if SNAPSHOT_DIR.exists() else set()
+    assert on_disk == set(manifest), "data/snapshots and MANIFEST.json list different files"
+    for name, entry in manifest.items():
+        assert sha256_of(SNAPSHOT_DIR / name) == entry["sha256"], f"{name} changed since it was recorded"
+        assert entry["retrieved_at"].endswith("Z") and entry["source_url"].startswith("https://")
 
 
 # --- 3. this repo's charts/ vs the copies on the live site ------------------

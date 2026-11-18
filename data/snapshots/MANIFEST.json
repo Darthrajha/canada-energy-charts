@@ -1,0 +1,16 @@
+{
+  "38100019-eng.zip": {
+    "bytes": 31912,
+    "note": "Table 38-10-0019-01, full-table CSV download (Households and the Environment Survey)",
+    "retrieved_at": "2026-11-18T05:48:01Z",
+    "sha256": "215b5c83e1d92ba8300bdb46c5630aeebbe9444fde2e1bc0637f49de5b93577e",
+    "source_url": "https://www150.statcan.gc.ca/n1/tbl/csv/38100019-eng.zip"
+  },
+  "9810025201-selected.csv": {
+    "bytes": 150759,
+    "note": "Table 98-10-0252-01, member selection: 13 provinces/territories x income groups x shelter-cost-to-income ratio, renter households (2021 Census)",
+    "retrieved_at": "2026-11-18T05:49:00Z",
+    "sha256": "c7d1a9715ef86988895e6271733ef1b4c6763ab95c345366d2b5ae4f00f5283b",
+    "source_url": "https://www150.statcan.gc.ca/t1/tbl1/en/dtl!downloadDbLoadingData-nonTraduit.action?pid=9810025201&latestN=1&csvLocale=en&selectedMembers=%5B%5B2%2C7%2C10%2C16%2C24%2C54%2C98%2C105%2C115%2C133%2C162%2C164%2C166%5D%2C%5B1%2C2%2C3%2C4%2C5%2C6%2C7%2C8%2C9%2C10%2C11%2C12%5D%2C%5B1%5D%2C%5B1%5D%2C%5B1%5D%2C%5B1%5D%2C%5B1%2C2%2C3%5D%2C%5B3%5D%5D"
+  }
+}

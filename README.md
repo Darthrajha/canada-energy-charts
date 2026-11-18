@@ -104,6 +104,29 @@ retry with backoff, and the processed CSVs are uploaded as a build artifact even
 when a run fails. GitHub pauses scheduled workflows after 60 days without repo
 activity; re-enable from the Actions tab if the badge goes stale.
 
+### Source snapshots
+
+Since autumn 2026 Statistics Canada answers automated clients with a "Security
+Check" page (HTTP 403), so its tables can no longer be fetched from CI. Each
+StatCan pipeline still tries the live source first, then falls back to a
+snapshot committed in `data/snapshots/`:
+
+| Snapshot | Table | Used by |
+|---|---|---|
+| `9810025201-selected.csv` | 98-10-0252-01, member selection | `affordability_gap.py` |
+| `38100019-eng.zip` | 38-10-0019-01, full table | `ac_coverage.py` |
+
+`data/snapshots/MANIFEST.json` records each file's source URL, retrieval time
+(UTC), size and SHA-256; the checksum is verified on every read and by the
+tests. While the block is in place, CI validates the snapshots rather than the
+live tables, so an upstream revision is only caught after a refresh.
+
+To refresh: open each `source_url` from the manifest in a browser, then from
+`src/` run `python snapshot.py add <downloaded file> --name <snapshot name>
+--url <source_url>` and commit. (`python snapshot.py url-affordability
+<metadata csv>` rebuilds the member-selection URL if geography IDs change.)
+NRCan's CEUD tables are still fetched live.
+
 The charts draw their map from `charts/canada-map.js`, a pre-projected,
 simplified set of province outlines, so they load no third-party libraries.
 

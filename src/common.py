@@ -9,11 +9,21 @@ Two access paths are used:
 
 Member IDs are discovered from cube metadata (``fetch_metadata``) rather than
 hardcoded, so geography changes upstream don't silently break the pipelines.
+
+Snapshots
+---------
+Statistics Canada began answering automated clients with a "Security Check"
+page (HTTP 403) in autumn 2026. Each fetch therefore tries the live source
+first and, if that fails, falls back to a committed snapshot in
+``data/snapshots``. Snapshots are downloaded by hand in a browser and recorded
+in ``data/snapshots/MANIFEST.json`` with their source URL, retrieval time (UTC)
+and SHA-256, which is verified on every read. See ``src/snapshot.py``.
 """
 
 from __future__ import annotations
 
 import csv
+import hashlib
 import io
 import json
 import zipfile
@@ -62,6 +72,8 @@ def get(url: str, params: dict | None = None) -> requests.Response:
 
 RAW_DIR = Path(__file__).resolve().parent.parent / "data" / "raw"
 PROCESSED_DIR = Path(__file__).resolve().parent.parent / "data" / "processed"
+SNAPSHOT_DIR = Path(__file__).resolve().parent.parent / "data" / "snapshots"
+MANIFEST = SNAPSHOT_DIR / "MANIFEST.json"
 
 PROVINCE_CODES = {
     "Newfoundland and Labrador": "NL",
@@ -80,17 +92,53 @@ PROVINCE_CODES = {
 }
 
 
+def sha256_of(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def load_manifest() -> dict:
+    return json.loads(MANIFEST.read_text(encoding="utf-8")) if MANIFEST.exists() else {}
+
+
+def snapshot_path(name: str, reason: Exception | None = None) -> Path:
+    """Return the committed snapshot ``name`` after verifying its checksum.
+
+    ``reason`` is the live-fetch error that led here; it is re-raised if no
+    snapshot exists, so the original failure is not hidden.
+    """
+    entry = load_manifest().get(name)
+    path = SNAPSHOT_DIR / name
+    if entry is None or not path.exists():
+        if reason is not None:
+            raise reason
+        raise FileNotFoundError(f"no snapshot recorded for {name}")
+    actual = sha256_of(path)
+    if actual != entry["sha256"]:
+        raise ValueError(f"snapshot {name} does not match MANIFEST.json (sha256 {actual})")
+    why = f" (live fetch failed: {reason})" if reason is not None else ""
+    print(f"using snapshot {name}, retrieved {entry['retrieved_at']}{why}")
+    return path
+
+
 def fetch_full_table(pid8: str) -> pd.DataFrame:
-    """Download a full StatCan table as CSV (cached in data/raw)."""
+    """Download a full StatCan table as CSV (cached in data/raw).
+
+    Falls back to the committed snapshot when the live download fails.
+    """
+    name = f"{pid8}-eng.zip"
     RAW_DIR.mkdir(parents=True, exist_ok=True)
-    cache = RAW_DIR / f"{pid8}-eng.zip"
+    cache = RAW_DIR / name
     if cache.exists() and not zipfile.is_zipfile(cache):
         cache.unlink()  # truncated or corrupt download from an earlier run
     if not cache.exists():
-        r = get(f"{BASE}/n1/tbl/csv/{pid8}-eng.zip")
-        tmp = cache.with_suffix(".part")
-        tmp.write_bytes(r.content)
-        tmp.replace(cache)  # atomic: an interrupted download never leaves a half-written cache
+        try:
+            r = get(f"{BASE}/n1/tbl/csv/{name}")
+        except requests.RequestException as exc:
+            cache = snapshot_path(name, reason=exc)
+        else:
+            tmp = cache.with_suffix(".part")
+            tmp.write_bytes(r.content)
+            tmp.replace(cache)  # atomic: an interrupted download never leaves a half-written cache
     with zipfile.ZipFile(cache) as z:
         with z.open(f"{pid8}.csv") as f:
             return pd.read_csv(f, low_memory=False)

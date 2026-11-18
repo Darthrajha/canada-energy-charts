@@ -26,16 +26,19 @@ Bracket totals use the STIR "Total" column, which includes the small
 from __future__ import annotations
 
 import pandas as pd
+import requests
 
 from common import (
     PROVINCE_CODES,
     fetch_metadata,
     fetch_selected,
     province_member_ids,
+    snapshot_path,
     write_processed,
 )
 
 PID = "9810025201"
+SNAPSHOT = f"{PID}-selected.csv"  # the member selection built in selection() below
 
 # Dimension members (from cube metadata):
 INCOME_BRACKETS = list(range(2, 13))  # "Under $10,000" ... "$100,000 and over"
@@ -53,9 +56,9 @@ INCOME_ORDER = [
 ]
 
 
-def fetch() -> pd.DataFrame:
-    provinces = province_member_ids(fetch_metadata(PID))
-    members = [
+def selection(provinces: dict[str, int]) -> list[list[int]]:
+    """Member selection for the download endpoint, one list per cube dimension."""
+    return [
         sorted(provinces.values()),
         [INCOME_TOTAL] + INCOME_BRACKETS,
         [DIM_TOTAL], [DIM_TOTAL], [DIM_TOTAL],
@@ -63,7 +66,15 @@ def fetch() -> pd.DataFrame:
         [STIR_TOTAL, STIR_UNDER30, STIR_30PLUS],
         [TENURE_RENTER],
     ]
-    return fetch_selected(PID, members)
+
+
+def fetch() -> pd.DataFrame:
+    """Live member-selection download, or the committed snapshot if that fails."""
+    try:
+        provinces = province_member_ids(fetch_metadata(PID))
+        return fetch_selected(PID, selection(provinces))
+    except requests.RequestException as exc:
+        return pd.read_csv(snapshot_path(SNAPSHOT, reason=exc))
 
 
 def transform(df: pd.DataFrame) -> pd.DataFrame:
